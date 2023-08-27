@@ -7,40 +7,34 @@ import {
   ApolloLink,
 } from "@apollo/client";
 
-
 import { createUploadLink } from "apollo-upload-client";
 import { onError } from "@apollo/client/link/error";
 
 async function refreshToken(client: ApolloClient<NormalizedCacheObject>) {
-    try {
-        const { data } = await client.mutate({
-            mutation: gql`
-            mutation RefreshToken {
-                refreshToken 
-            }
-            `
-        });
-
-        const newAccessToken = data?.refreshToken;
-        console.log("newAccessToken", newAccessToken);
-
-        if (!newAccessToken) {
-            throw new Error("No New access token recieved");
+  try {
+    const { data } = await client.mutate({
+      mutation: gql`
+        mutation RefreshToken {
+          refreshToken
         }
+      `,
+    });
 
-        localStorage.setItem("accessToken", newAccessToken);
-
-        return `Bearer ${newAccessToken}`;
-        
-    } catch (error: any) {
-        console.log("error", error.message);
-        throw new Error('Error getting new access token');
+    const newAccessToken = data?.refreshToken;
+    console.log("newAccessToken", newAccessToken);
+    if (!newAccessToken) {
+      throw new Error("New access token not received.");
     }
+    localStorage.setItem("accessToken", newAccessToken);
+    return `Bearer ${newAccessToken}`;
+  } catch (err) {
+    console.log(err);
+    throw new Error("Error getting new access token.");
+  }
 }
 
 let retryCount = 0;
 const maxRetry = 3;
-
 
 const errorLink = onError(({ graphQLErrors, operation, forward }) => {
   const operationName = operation.operationName;
@@ -74,7 +68,6 @@ const errorLink = onError(({ graphQLErrors, operation, forward }) => {
     }
   }
 });
-
 const uploadLink = createUploadLink({
   uri: "http://localhost:3000/graphql",
   credentials: "include",
